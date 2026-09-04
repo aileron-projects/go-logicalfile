@@ -1,0 +1,62 @@
+name: Test
+
+on:
+  - workflow_dispatch
+  - push
+
+jobs:
+  test:
+    name: ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: "ubuntu", os: "linux" }
+          - { runner: "windows", os: "windows" }
+          - { runner: "macos", os: "darwin" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+      - run: go test -v -cover -coverprofile="coverage.out" ./...
+      - run: go tool cover -html="coverage.out" -o "coverage.html"
+      - run: go tool cover -func="coverage.out" -o "coverage.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.os }}
+          path: coverage.*
+
+  test-qemu:
+    name: qemu-${{ matrix.arch }}${{ matrix.arm }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { qemu: "x86_64", arch: "amd64", arm: "" }
+          - { qemu: "arm", arch: "arm", arm: "5" }
+          - { qemu: "arm", arch: "arm", arm: "6" }
+          - { qemu: "arm", arch: "arm", arm: "7" }
+          - { qemu: "aarch64", arch: "arm64", arm: "" }
+          - { qemu: "ppc64", arch: "ppc64", arm: "" }
+          - { qemu: "ppc64le", arch: "ppc64le", arm: "" }
+          - { qemu: "riscv64", arch: "riscv64", arm: "" }
+          - { qemu: "s390x", arch: "s390x", arm: "" }
+          - { qemu: "loong64", arch: "loong64", arm: "" }
+          - { qemu: "i386", arch: "386", arm: "" }
+          - { qemu: "mips", arch: "mips", arm: "" }
+          - { qemu: "mips64", arch: "mips64", arm: "" }
+          - { qemu: "mips64el", arch: "mips64le", arm: "" }
+          - { qemu: "mipsel", arch: "mipsle", arm: "" }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+      - run: sudo apt-get -y update && sudo apt-get -y install qemu-user
+      - run: GOARCH=${{ matrix.arch }} GOARM=${{ matrix.arm }} go test -c -cover ./...
+      - run: ls ./*.test | xargs -i bash -c "GOARM=${{ matrix.arm }} qemu-${{ matrix.qemu }} {} -test.v"
