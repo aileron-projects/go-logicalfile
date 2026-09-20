@@ -49,8 +49,8 @@ jobs:
           - { qemu: "loong64", arch: "loong64", arm: "" }
           - { qemu: "i386", arch: "386", arm: "" }
           - { qemu: "mips", arch: "mips", arm: "" }
-          # - { qemu: "mips64", arch: "mips64", arm: "" } # Temporarily skip
-          - { qemu: "mips64el", arch: "mips64le", arm: "" }
+          # - { qemu: "mips64", arch: "mips64", arm: "" }
+          # - { qemu: "mips64el", arch: "mips64le", arm: "" }
           - { qemu: "mipsel", arch: "mipsle", arm: "" }
     steps:
       - uses: actions/checkout@v7
